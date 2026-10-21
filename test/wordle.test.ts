@@ -14,8 +14,6 @@ import { match } from 'node:assert';
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 // Step 1: a generator for five-letter uppercase words.
-// const word = ...
-
 const wordFrom = (letters: string) =>
   fc.array(fc.constantFrom(...letters), {minLength: 5, maxLength:5}).map(cs => cs.join(''));
 const word = wordFrom('ABC');
@@ -57,6 +55,15 @@ it('guessing the secret gives all greens', () => {
   fc.assert(
     fc.property(word, w => {
       expect(matchGuess(w, w)).toEqual(['G', 'G', 'G', 'G', 'G']);
+    }),
+  );
+});
+
+// Pattern: metamorphic. Swapping secret and guess gives the same number of each color
+it('swapping secret and guess keeps the same color counts', () => {
+  fc.assert(
+    fc.property(word, word, (secret, guess) => {
+      expect(matchGuess(guess, secret).sort()).toEqual(matchGuess(secret, guess).sort());
     }),
   );
 });
