@@ -16,7 +16,7 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 // Step 1: a generator for five-letter uppercase words.
 const wordFrom = (letters: string) =>
   fc.array(fc.constantFrom(...letters), {minLength: 5, maxLength:5}).map(cs => cs.join(''));
-const word = wordFrom('ABC');
+const word = fc.oneof(wordFrom('ABC'), wordFrom(ALPHABET)); // ABC hits duplicate letters; A-Z hits letters absent from the secret
 
 // Pattern: invariant. Result should always have exactly 5 colors.
 it('returns exactly 5 colors', () => {
@@ -55,6 +55,18 @@ it('guessing the secret gives all greens', () => {
   fc.assert(
     fc.property(word, w => {
       expect(matchGuess(w, w)).toEqual(['G', 'G', 'G', 'G', 'G']);
+    }),
+  );
+});
+
+// Pattern: conditional. If guess is a rearrangement of the secret => no color is black
+it('rearranging the secret gives no blacks', () => {
+  const secretAndShuffle = word.chain(secret =>
+    fc.shuffledSubarray([...secret], { minLength: 5, maxLength: 5 }).map(cs => [secret, cs.join('')]),
+  );
+  fc.assert(
+    fc.property(secretAndShuffle, ([secret, guess]) => {
+      expect(matchGuess(secret, guess)).not.toContain('B');
     }),
   );
 });
